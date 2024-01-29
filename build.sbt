@@ -18,7 +18,7 @@ lazy val root = (project in file("."))
       "dev.zio" %% "zio" % dependencies.zio,
       "dev.zio" %% "zio-test" % dependencies.zio % Test,
       "dev.zio" %% "zio-test-sbt" % dependencies.zio % Test,
-      
+
 
       "io.univalence" %% "zio-spark" % dependencies.zioSpark,
 
