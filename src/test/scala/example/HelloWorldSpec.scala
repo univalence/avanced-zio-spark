@@ -5,7 +5,7 @@ import zio._
 
 
 object HelloWorldSpec extends ZIOSpecDefault {
-  def spec =
+  def spec: Spec[TestEnvironment with Scope, Any] =
     suite("HelloWorldSpec")(
       test("sayHello") {
         val h = "hello"
