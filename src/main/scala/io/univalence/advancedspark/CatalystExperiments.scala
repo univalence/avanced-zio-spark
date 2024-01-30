@@ -31,7 +31,7 @@ object CatalystExperiments {
   }
 
 
-  class MySubstitutionOptimisation private (sparkSession: org.apache.spark.sql.SparkSession) extends Rule[LogicalPlan] {
+  class MySubstitutionOptimisation (sparkSession: org.apache.spark.sql.SparkSession) extends Rule[LogicalPlan] {
 
     def addSubstitution(read: DataFrame, replaceWith: DataFrame): Unit = {
       MySubstitutionOptimisation.globalReplace.updateAndGet(_ :+ (read, replaceWith))
