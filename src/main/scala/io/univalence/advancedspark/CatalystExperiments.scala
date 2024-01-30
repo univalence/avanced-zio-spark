@@ -6,6 +6,8 @@ import org.apache.spark.sql.execution.{SparkPlan, SparkStrategy}
 import org.apache.spark.sql.{DataFrame, SetOptim, SparkSession}
 import zio.spark.sql.SIO
 
+import java.util.concurrent.atomic.AtomicReference
+
 
 object CatalystExperiments {
 
@@ -29,19 +31,31 @@ object CatalystExperiments {
   }
 
 
-  class MySubstitutionOptimisation private (sparkSession: org.apache.spark.sql.SparkSession, private var replaceWith: Seq[(DataFrame, DataFrame)]) extends Rule[LogicalPlan] {
+  class MySubstitutionOptimisation private (sparkSession: org.apache.spark.sql.SparkSession) extends Rule[LogicalPlan] {
 
     def addSubstitution(read: DataFrame, replaceWith: DataFrame): Unit = {
-      this.replaceWith = this.replaceWith :+ (read, replaceWith)
+      MySubstitutionOptimisation.globalReplace.updateAndGet(_ :+ (read, replaceWith))
     }
-
-    def this(sparkSession: org.apache.spark.sql.SparkSession) = this(sparkSession, Seq.empty)
 
     override def apply(plan: LogicalPlan): LogicalPlan = {
-
-
+      val remplacements = MySubstitutionOptimisation.globalReplace.get()
+    /*
+      replaceWith.foreach({
+        case (read, replaceWith) => {
+          plan.transformUp({
+            case x if x == read.queryExecution.plan => replaceWith.queryExecution.optimizedPlan
+          })
+        }
+      }*/
       plan
     }
+  }
+
+  object MySubstitutionOptimisation {
+    //dirty fix
+    val globalReplace: AtomicReference[Seq[(DataFrame, DataFrame)]] = new AtomicReference(Nil)
+
+
   }
 
   def forceSubtitution(read: zio.spark.sql.DataFrame, replaceWith: zio.spark.sql.DataFrame): SIO[Unit] = {
