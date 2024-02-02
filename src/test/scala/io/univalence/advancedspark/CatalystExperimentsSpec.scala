@@ -1,5 +1,6 @@
 package io.univalence.advancedspark
 
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Row, SaveMode}
 import zio.direct._
 import zio.{Scope, ZIO, ZLayer}
@@ -32,13 +33,36 @@ object CatalystExperimentsSpec extends ZIOSpecDefault {
 
         val target = "target/tmp/data.parquet"
 
-        adults.write.mode(SaveMode.Overwrite).parquet(target).run
+        //adults.write.mode(SaveMode.Overwrite).parquet(target).run
+        //TODO créer un parquet en enlevant un adulte, puis ne plus l'écraser, et rajouter l'adulte, en tout cas c'est que j'avais fait
 
         val adultsFromDisk: DataFrame = SparkSession.read.parquet(target).run
+
+        adults
+          .withColumn("test", input_file_name()).show(false).run
 
         CatalystExperiments.forceSubtitution(adults, adultsFromDisk).run
 
         val analysis2 = data.where("age >= 18").get(_.queryExecution).optimizedPlan
+
+        val analysis3 = data.where("age >= 16").get(_.queryExecution).optimizedPlan
+
+        val test = data.where("age >= 18")
+          //.withColumn("test", input_file_name())
+          //.withColumn("eee", lit("test"))
+        test.show(false).run
+
+        data.where("age >= 16")
+          //.withColumn("test", input_file_name())
+          //.withColumn("eee", lit("test"))
+          .show(false).run
+
+
+        /*
+        adultsFromDisk
+          .withColumn("test", input_file_name()).show(false).run
+
+         */
 
 
         assertTrue(true)

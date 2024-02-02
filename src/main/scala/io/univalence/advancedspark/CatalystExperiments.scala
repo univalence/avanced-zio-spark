@@ -1,6 +1,7 @@
 package io.univalence.advancedspark
 
-import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import org.apache.spark.sql.catalyst.expressions.{Cast, Expression, GreaterThanOrEqual}
+import org.apache.spark.sql.catalyst.plans.logical.{Filter, GlobalLimit, LogicalPlan}
 import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.execution.{SparkPlan, SparkStrategy}
 import org.apache.spark.sql.{DataFrame, SetOptim, SparkSession}
@@ -38,7 +39,7 @@ object CatalystExperiments {
     }
 
     override def apply(plan: LogicalPlan): LogicalPlan = {
-      val remplacements = MySubstitutionOptimisation.globalReplace.get()
+      val remplacements: Seq[(DataFrame, DataFrame)] = MySubstitutionOptimisation.globalReplace.get()
     /*
       replaceWith.foreach({
         case (read, replaceWith) => {
@@ -47,7 +48,20 @@ object CatalystExperiments {
           })
         }
       }*/
-      plan
+
+      if(remplacements.nonEmpty)
+        {
+          val original_plan = remplacements(0)._1.queryExecution.commandExecuted
+          val new_plan = remplacements(0)._2.queryExecution.logical
+          plan transformUp {
+            //case Filter(Cast(_ ,_, _, _),_) => //new_plan
+            case x: Filter if x.condition == original_plan.asInstanceOf[Filter].condition =>
+              new_plan
+            case _ => plan
+          }
+        }
+      else plan
+
     }
   }
 
