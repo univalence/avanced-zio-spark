@@ -3,7 +3,8 @@ package io.univalence.advancedspark
 import org.apache.spark.sql.catalyst.expressions.{Cast, Expression, GreaterThanOrEqual}
 import org.apache.spark.sql.catalyst.plans.logical.{Filter, GlobalLimit, LogicalPlan}
 import org.apache.spark.sql.catalyst.rules.Rule
-import org.apache.spark.sql.execution.{SparkPlan, SparkStrategy}
+import org.apache.spark.sql.execution.datasources.{HadoopFsRelation, LogicalRelation}
+import org.apache.spark.sql.execution.{SparkPlan, SparkStrategy, datasources}
 import org.apache.spark.sql.{DataFrame, SetOptim, SparkSession}
 import zio.spark.sql.SIO
 
@@ -29,6 +30,15 @@ object CatalystExperiments {
         throw new Exception("MySubstitutionStrat not found")
       })
     })
+  }
+
+  def source(df: DataFrame): List[String] = {
+    (df.queryExecution.logical +: df.queryExecution.logical.children)
+      .filter(plan => plan.isInstanceOf[LogicalRelation])
+      .flatMap(
+        {case LogicalRelation(HadoopFsRelation(location, _, _, _, _, _), _ ,_, _) => location.inputFiles}
+      )
+      .toList
   }
 
 
