@@ -64,8 +64,8 @@ object CatalystExperimentsSpec extends ZIOSpecDefault {
 
          */
 
-        CatalystExperiments.source(adults.underlying).map(println)
-        CatalystExperiments.source(adultsFromDisk.underlying).map(println)
+        CatalystExperiments.sources(adults.underlying).map(println)
+        CatalystExperiments.sources(adultsFromDisk.underlying).map(println)
 
 
         assertTrue(true)

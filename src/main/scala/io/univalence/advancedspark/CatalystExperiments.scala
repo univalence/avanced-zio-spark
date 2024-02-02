@@ -32,7 +32,7 @@ object CatalystExperiments {
     })
   }
 
-  def source(df: DataFrame): List[String] = {
+  def sources(df: DataFrame): List[String] = {
     (df.queryExecution.logical +: df.queryExecution.logical.children)
       .filter(plan => plan.isInstanceOf[LogicalRelation])
       .flatMap(
