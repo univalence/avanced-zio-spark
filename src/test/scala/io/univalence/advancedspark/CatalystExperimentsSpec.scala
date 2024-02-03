@@ -53,10 +53,14 @@ object CatalystExperimentsSpec extends ZIOSpecDefault {
         test.show(truncate = false).run
 
         data.where("age >= 16")
-          //.withColumn("test", input_file_name())
+          .withColumn("test", input_file_name())
           //.withColumn("eee", lit("test"))
           .show(truncate = false).run
 
+        data.where("age >= 18").where("age < 50")
+          .withColumn("test", input_file_name())
+          //.withColumn("eee", lit("test"))
+          .show(truncate = false).run
 
         /* adultsFromDisk.withColumn("test", input_file_name()).show(false).run */
 
