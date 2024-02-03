@@ -1,7 +1,7 @@
 package io.univalence.advancedspark
 
 import org.apache.spark.sql.catalyst.expressions.{Cast, Expression, GreaterThanOrEqual}
-import org.apache.spark.sql.catalyst.plans.logical.{Filter, GlobalLimit, LogicalPlan}
+import org.apache.spark.sql.catalyst.plans.logical.{Filter, GlobalLimit, LogicalPlan, Project}
 import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.execution.datasources.{HadoopFsRelation, LogicalRelation}
 import org.apache.spark.sql.execution.{SparkPlan, SparkStrategy, datasources}
@@ -47,23 +47,29 @@ object CatalystExperiments {
     override def apply(plan: LogicalPlan): LogicalPlan = {
       val remplacements: Seq[Substitution] = MySubstitutionOptimisation.globalReplace.get()
 
-      if(remplacements.nonEmpty) {
+      if (remplacements.nonEmpty) {
+
+
         val res = plan.transformDown(x => {
           val canon = x.canonicalized
           remplacements.find(_.read.queryExecution.analyzed.canonicalized == canon) match {
             case Some(Substitution(_, replaceWith)) =>
 
-
-              replaceWith.queryExecution.optimizedPlan
+              val replacePlan = replaceWith.queryExecution.logical
+              //zip could not work on case with different name orders
+              //Project(x.output.zip(replacePlan.output).map({ case (a, b) => b.withExprId(a.exprId) }), replacePlan)
+              //by keeping the plan logical, don't need to invalidate the metadata
+              replacePlan
             case None => x
           }
         })
-
         if(res != plan) {
-          res.refresh()
-          res
-        } else plan
 
+          println(plan.numberedTreeString)
+          println(res.numberedTreeString)
+        }
+
+        res
       } else {
         plan
       }
