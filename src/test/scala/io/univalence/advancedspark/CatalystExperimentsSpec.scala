@@ -41,32 +41,31 @@ object CatalystExperimentsSpec extends ZIOSpecDefault {
         adults
           .withColumn("test", input_file_name()).show(false).run
 
-        CatalystExperiments.forceSubtitution(adults, adultsFromDisk).run
+        CatalystExperiments.forceSubstitution(adults, adultsFromDisk).run
 
         val analysis2 = data.where("age >= 18").get(_.queryExecution).optimizedPlan
 
         val analysis3 = data.where("age >= 16").get(_.queryExecution).optimizedPlan
 
-        val test = data.where("age >= 18")
-          //.withColumn("test", input_file_name())
+        val test:DataFrame = data.where("age >= 18")
+          .withColumn("test", input_file_name())
           //.withColumn("eee", lit("test"))
-        test.show(false).run
+        test.show(truncate = false).run
 
         data.where("age >= 16")
           //.withColumn("test", input_file_name())
           //.withColumn("eee", lit("test"))
-          .show(false).run
+          .show(truncate = false).run
 
 
-        /*
-        adultsFromDisk
-          .withColumn("test", input_file_name()).show(false).run
+        /* adultsFromDisk.withColumn("test", input_file_name()).show(false).run */
 
-         */
 
-        CatalystExperiments.sources(adults.underlying).map(println)
-        CatalystExperiments.sources(adultsFromDisk.underlying).map(println)
-
+        ZIO.attempt({
+          CatalystExperiments.sources(adults.underlying).foreach(println)
+          CatalystExperiments.sources(adultsFromDisk.underlying).foreach(println)
+          CatalystExperiments.sources(test.underlying).foreach(println)
+        }).run
 
         assertTrue(true)
 
@@ -78,7 +77,7 @@ object CatalystExperimentsSpec extends ZIOSpecDefault {
             org.apache.spark.sql.SparkSession.builder()
               .master("local[*]")
               .appName("test")
-              .withExtensions(_.injectOptimizerRule(new CatalystExperiments.MySubstitutionOptimisation(_)))
+              .withExtensions(_.injectPostHocResolutionRule(new CatalystExperiments.MySubstitutionOptimisation(_)))
               .getOrCreate()
           ))
         )
